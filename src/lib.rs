@@ -3,8 +3,10 @@
 pub mod day_1_sonar_sweep;
 pub mod day_2_dive;
 pub mod day_3_binary_diagnostic;
+pub mod day_4_giant_squid;
 
-pub use itertools::Itertools;
+pub(crate) use itertools::Itertools;
+pub(crate) use tap::{Conv, TryConv};
 
 // Borrowed this macro from iliana:
 // https://github.com/iliana/aoc2021/blob/d5d7eb7336b9078081a9f7a44ce7ebb6dce374f4/src/lib.rs

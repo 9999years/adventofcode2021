@@ -7,6 +7,7 @@ name = "aoc2021"
 version = "1.0.0"
 dependencies = [
  "itertools",
+ "tap",
 ]
 
 [[package]]
@@ -23,3 +24,9 @@ checksum = "69ddb889f9d0d08a67338271fa9b62996bc788c7796a5c18cf057420aaed5eaf"
 dependencies = [
  "either",
 ]
+
+[[package]]
+name = "tap"
+version = "1.0.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "55937e1799185b12863d447f42597ed69d9928686b8d88a1df17376a097d8369"
