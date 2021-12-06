@@ -2,17 +2,22 @@ use std::str::FromStr;
 
 use crate::*;
 
-pub fn part_1<I: Iterator<Item = usize>, const BITS: usize>(commands: I) -> usize {
+fn ones_per_bit<I: Iterator<Item = usize>, const BITS: usize>(numbers: I) -> [usize; BITS] {
     let mut ones: [usize; BITS] = [0; BITS];
-    let total: usize = commands.fold(0, |count, num| {
+    for num in numbers {
         for bit in 0..BITS {
             ones[bit] += (num >> bit) & 1;
         }
-        count + 1
-    });
+    }
+    ones
+}
+
+pub fn part_1<I: Iterator<Item = usize>, const BITS: usize>(numbers: I) -> usize {
+    let numbers = numbers.collect::<Vec<_>>();
+    let ones = ones_per_bit::<_, BITS>(numbers.iter().copied());
     // If there are more than `threshold` 1-bits at a certain position, 1 is the
     // most common bit at that position.
-    let threshold = total / 2;
+    let threshold = numbers.len() / 2;
     let gamma: usize = ones
         .into_iter()
         .enumerate()
@@ -26,8 +31,54 @@ pub fn part_1<I: Iterator<Item = usize>, const BITS: usize>(commands: I) -> usiz
     gamma * epsilon
 }
 
-pub fn part_2(commands: impl Iterator<Item = u32>) -> i32 {
-    todo!()
+pub fn part_2<I: Iterator<Item = usize>, const BITS: usize>(numbers: I) -> usize {
+    let numbers = numbers.collect::<Vec<_>>();
+    let mut oxygen_numbers = numbers.clone();
+    let mut oxygen_rating = None;
+    for bit in (0..BITS).rev() {
+        let ones = ones_per_bit::<_, BITS>(oxygen_numbers.iter().copied());
+        // Letting `b = ones[bit]` and `n = oxygen_numbers.len()`;
+        // The zero count is given by `n - b`, so "there are more ones than
+        // zeros" is:
+        //      b ≥ n - b
+        //       ...
+        //     2b ≥ n
+        let most_common_bit = if 2 * ones[bit] >= oxygen_numbers.len() {
+            1
+        } else {
+            0
+        };
+        oxygen_numbers.retain(|num| (num >> bit) & 1 == most_common_bit);
+
+        if oxygen_numbers.len() == 1 {
+            oxygen_rating = Some(oxygen_numbers[0]);
+            break;
+        }
+    }
+
+    let mut co2_numbers = numbers.clone();
+    let mut co2_rating = None;
+    for bit in (0..BITS).rev() {
+        let ones = ones_per_bit::<_, BITS>(co2_numbers.iter().copied());
+        let least_common_bit = if 2 * ones[bit] >= co2_numbers.len() {
+            0
+        } else {
+            1
+        };
+        co2_numbers.retain(|num| (num >> bit) & 1 == least_common_bit);
+
+        if co2_numbers.len() == 1 {
+            co2_rating = Some(co2_numbers[0]);
+            break;
+        }
+    }
+
+    println!(
+        "oxygen rating: {:?}, co2 rating: {:?}",
+        oxygen_rating, co2_rating
+    );
+    oxygen_rating.expect("No oxygen generator rating found!")
+        * co2_rating.expect("No CO₂ scrubber rating found!")
 }
 
 #[cfg(test)]
@@ -56,11 +107,11 @@ mod tests {
 
     #[test]
     fn test_part_2_sample() {
-        // assert_eq!(part_2(SAMPLE.into_iter()), 900);
+        assert_eq!(part_2::<_, 5>(SAMPLE.into_iter()), 230);
     }
 
     #[test]
     fn test_part_2() {
-        // assert_eq!(part_2(input!("day_2_dive", Command)), 1903644897);
+        assert_eq!(part_2::<_, 12>(input()), 2555739);
     }
 }
