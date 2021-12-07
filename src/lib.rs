@@ -6,6 +6,7 @@ pub mod day_3_binary_diagnostic;
 pub mod day_4_giant_squid;
 pub mod day_5_hydrothermal_venture;
 pub mod day_6_lanternfish;
+pub mod day_7_the_treachery_of_whales;
 
 pub(crate) use itertools::Itertools;
 pub(crate) use tap::{Conv, TryConv};
