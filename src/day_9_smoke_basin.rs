@@ -1,3 +1,5 @@
+use std::collections::HashSet;
+use std::collections::VecDeque;
 use std::str::FromStr;
 
 use crate::*;
@@ -33,21 +35,28 @@ impl FromStr for HeightMap {
 }
 
 impl HeightMap {
-    pub fn neighbors(&self, x: usize, y: usize) -> Vec<u8> {
+    pub fn neighbor_coords(&self, x: usize, y: usize) -> Vec<(usize, usize)> {
         let mut ret = Vec::with_capacity(4);
         if y > 0 {
-            ret.push(self.0[x][y - 1]);
+            ret.push((x, y - 1));
         }
         if y < self.0[x].len() - 1 {
-            ret.push(self.0[x][y + 1]);
+            ret.push((x, y + 1));
         }
         if x > 0 {
-            ret.push(self.0[x - 1][y]);
+            ret.push((x - 1, y));
         }
         if x < self.0.len() - 1 {
-            ret.push(self.0[x + 1][y]);
+            ret.push((x + 1, y));
         }
         ret
+    }
+
+    pub fn neighbors(&self, x: usize, y: usize) -> Vec<u8> {
+        self.neighbor_coords(x, y)
+            .into_iter()
+            .map(|(x, y)| self.0[x][y])
+            .collect()
     }
 
     pub fn is_low_point(&self, x: usize, y: usize) -> bool {
@@ -63,6 +72,30 @@ impl HeightMap {
 
     pub fn coords(&self) -> impl Iterator<Item = (usize, usize)> {
         (0..self.0.len()).cartesian_product(0..self.0[0].len())
+    }
+
+    pub fn basin_size(&self, x: usize, y: usize) -> usize {
+        // Breadth-first search to increasing neighbors.
+        let mut to_explore = VecDeque::with_capacity(self.0.len());
+        to_explore.push_back((x, y));
+        let mut explored = HashSet::with_capacity(self.0.len());
+        explored.insert((x, y));
+        let mut basin_size = 0;
+        while !to_explore.is_empty() {
+            basin_size += 1;
+            let (current_x, current_y) = to_explore.pop_front().unwrap();
+            for neighbor @ (neighbor_x, neighbor_y) in self.neighbor_coords(current_x, current_y) {
+                if !explored.contains(&neighbor) {
+                    let neighbor_height = self.0[neighbor_x][neighbor_y];
+                    if neighbor_height != 9 && neighbor_height >= self.0[current_x][current_y] {
+                        // Neighbor is in the basin:
+                        explored.insert(neighbor);
+                        to_explore.push_back(neighbor);
+                    }
+                }
+            }
+        }
+        basin_size
     }
 }
 
@@ -80,7 +113,16 @@ pub fn part_1(heights: HeightMap) -> usize {
 }
 
 pub fn part_2(heights: HeightMap) -> usize {
-    0
+    heights
+        .coords()
+        .filter(|(x, y)| heights.is_low_point(*x, *y))
+        .map(|(x, y)| heights.basin_size(x, y))
+        .sorted()
+        .collect::<Vec<_>>()
+        .into_iter()
+        .rev()
+        .take(3)
+        .product()
 }
 
 #[cfg(test)]
@@ -113,11 +155,11 @@ mod tests {
 
     #[test]
     fn test_part_2_sample() {
-        // assert_eq!(part_2(sample()), 0);
+        assert_eq!(part_2(sample()), 1134);
     }
 
     #[test]
     fn test_part_2() {
-        // assert_eq!(part_2(input()), 0);
+        assert_eq!(part_2(input()), 1330560);
     }
 }
