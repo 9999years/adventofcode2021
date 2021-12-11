@@ -14,6 +14,31 @@ pub mod day_9_smoke_basin;
 pub(crate) use itertools::Itertools;
 pub(crate) use tap::{Conv, TryConv};
 
+pub(crate) trait Parsable<T> {
+    type Err;
+    fn parse(self) -> Result<T, Self::Err>;
+}
+
+impl Parsable<u8> for char {
+    type Err = String;
+
+    fn parse(self) -> Result<u8, Self::Err> {
+        match self {
+            '0' => Ok(0),
+            '1' => Ok(1),
+            '2' => Ok(2),
+            '3' => Ok(3),
+            '4' => Ok(4),
+            '5' => Ok(5),
+            '6' => Ok(6),
+            '7' => Ok(7),
+            '8' => Ok(8),
+            '9' => Ok(9),
+            _ => Err(format!("Cannot parse char {:?} as integer", self)),
+        }
+    }
+}
+
 // Borrowed this macro from iliana:
 // https://github.com/iliana/aoc2021/blob/d5d7eb7336b9078081a9f7a44ce7ebb6dce374f4/src/lib.rs
 #[macro_export]

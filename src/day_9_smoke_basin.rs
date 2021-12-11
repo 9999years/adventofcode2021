@@ -14,19 +14,7 @@ impl FromStr for HeightMap {
             s.lines()
                 .map(|line| {
                     line.chars()
-                        .map(|c| match c {
-                            '0' => Ok(0),
-                            '1' => Ok(1),
-                            '2' => Ok(2),
-                            '3' => Ok(3),
-                            '4' => Ok(4),
-                            '5' => Ok(5),
-                            '6' => Ok(6),
-                            '7' => Ok(7),
-                            '8' => Ok(8),
-                            '9' => Ok(9),
-                            _ => Err(format!("Non-numeric char {}", c)),
-                        })
+                        .map(|c| c.parse())
                         .collect()
                 })
                 .collect::<Result<_, _>>()?,
