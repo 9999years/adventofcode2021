@@ -10,6 +10,7 @@ pub mod day_6_lanternfish;
 pub mod day_7_the_treachery_of_whales;
 pub mod day_8_seven_segment_search;
 pub mod day_9_smoke_basin;
+pub mod day_11_dumbo_octopus;
 
 pub(crate) use itertools::Itertools;
 pub(crate) use tap::{Conv, TryConv};
