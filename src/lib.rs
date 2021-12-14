@@ -3,6 +3,7 @@
 pub mod day_10_syntax_scoring;
 pub mod day_11_dumbo_octopus;
 pub mod day_12_passage_pathing;
+pub mod day_13_transparent_origami;
 pub mod day_1_sonar_sweep;
 pub mod day_2_dive;
 pub mod day_3_binary_diagnostic;
