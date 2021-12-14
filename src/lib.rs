@@ -1,6 +1,8 @@
 #![allow(unused_imports)]
 
 pub mod day_10_syntax_scoring;
+pub mod day_11_dumbo_octopus;
+pub mod day_12_passage_pathing;
 pub mod day_1_sonar_sweep;
 pub mod day_2_dive;
 pub mod day_3_binary_diagnostic;
@@ -10,7 +12,6 @@ pub mod day_6_lanternfish;
 pub mod day_7_the_treachery_of_whales;
 pub mod day_8_seven_segment_search;
 pub mod day_9_smoke_basin;
-pub mod day_11_dumbo_octopus;
 
 pub(crate) use itertools::Itertools;
 pub(crate) use tap::{Conv, TryConv};
