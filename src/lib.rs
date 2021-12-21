@@ -7,6 +7,7 @@ pub mod day_13_transparent_origami;
 pub mod day_14_extended_polymerization;
 pub mod day_15_chiton;
 pub mod day_16_packet_decoder;
+pub mod day_17_trick_shot;
 pub mod day_1_sonar_sweep;
 pub mod day_2_dive;
 pub mod day_3_binary_diagnostic;
