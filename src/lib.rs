@@ -6,6 +6,7 @@ pub mod day_12_passage_pathing;
 pub mod day_13_transparent_origami;
 pub mod day_14_extended_polymerization;
 pub mod day_15_chiton;
+pub mod day_16_packet_decoder;
 pub mod day_1_sonar_sweep;
 pub mod day_2_dive;
 pub mod day_3_binary_diagnostic;
@@ -39,6 +40,12 @@ impl Parsable<u8> for char {
             '7' => Ok(7),
             '8' => Ok(8),
             '9' => Ok(9),
+            'A' => Ok(10),
+            'B' => Ok(11),
+            'C' => Ok(12),
+            'D' => Ok(13),
+            'E' => Ok(14),
+            'F' => Ok(15),
             _ => Err(format!("Cannot parse char {:?} as integer", self)),
         }
     }
