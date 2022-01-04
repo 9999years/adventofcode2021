@@ -7,7 +7,7 @@ use bitvec::prelude::*;
 #[derive(Clone)]
 pub struct TrenchScan {
     algorithm: BitVec,
-    image: HashSet<(isize, isize)>,
+    image: BitVec,
     x_min: isize,
     x_max: isize,
     y_min: isize,
@@ -19,14 +19,10 @@ impl Display for TrenchScan {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         for y in self.y_min - 2..=self.y_max + 2 {
             for x in self.x_min - 2..=self.x_max + 2 {
-                let c = if self.is_lit(&(x, y), 0) == 1 {
-                    '#'
-                } else {
-                    '.'
-                };
+                let c = if self.is_lit(&(x, y)) { '#' } else { '.' };
                 write!(f, "{}", c)?;
             }
-            write!(f, "\n")?;
+            writeln!(f, "")?;
         }
         Ok(())
     }
@@ -34,11 +30,30 @@ impl Display for TrenchScan {
 
 impl TrenchScan {
     #[inline]
-    fn is_lit(&self, point @ (x, y): &(isize, isize), bit: usize) -> usize {
-        if (self.oob_is_lit
-            && (*x < self.x_min || *x > self.x_max || *y < self.y_min || *y > self.y_max))
-            || self.image.contains(point)
-        {
+    fn width(&self) -> isize {
+        self.x_max - self.x_min + 1
+    }
+
+    #[inline]
+    fn height(&self) -> isize {
+        self.y_max - self.y_min + 1
+    }
+
+    #[inline]
+    fn is_lit(&self, (x, y): &(isize, isize)) -> bool {
+        if *x < self.x_min || *x > self.x_max || *y < self.y_min || *y > self.y_max {
+            // Out of bounds.
+            self.oob_is_lit
+        } else if self.image[((y - self.y_min) * self.width() + x - self.x_min) as usize] {
+            true
+        } else {
+            false
+        }
+    }
+
+    #[inline]
+    fn is_lit_bit(&self, point: &(isize, isize), bit: usize) -> usize {
+        if self.is_lit(point) {
             1 << bit
         } else {
             0
@@ -46,43 +61,41 @@ impl TrenchScan {
     }
 
     fn index(&self, (x, y): (isize, isize)) -> usize {
-        self.is_lit(&(x + 1, y + 1), 0)
-            + self.is_lit(&(x, y + 1), 1)
-            + self.is_lit(&(x - 1, y + 1), 2)
-            + self.is_lit(&(x + 1, y), 3)
-            + self.is_lit(&(x, y), 4)
-            + self.is_lit(&(x - 1, y), 5)
-            + self.is_lit(&(x + 1, y - 1), 6)
-            + self.is_lit(&(x, y - 1), 7)
-            + self.is_lit(&(x - 1, y - 1), 8)
+        self.is_lit_bit(&(x + 1, y + 1), 0)
+            + self.is_lit_bit(&(x, y + 1), 1)
+            + self.is_lit_bit(&(x - 1, y + 1), 2)
+            + self.is_lit_bit(&(x + 1, y), 3)
+            + self.is_lit_bit(&(x, y), 4)
+            + self.is_lit_bit(&(x - 1, y), 5)
+            + self.is_lit_bit(&(x + 1, y - 1), 6)
+            + self.is_lit_bit(&(x, y - 1), 7)
+            + self.is_lit_bit(&(x - 1, y - 1), 8)
     }
 
     fn is_lit_next_step(&self, point: (isize, isize)) -> bool {
         self.algorithm[self.index(point)]
     }
 
-    pub fn step(&self) -> Self {
-        let mut ret = self.clone();
-        ret.oob_is_lit = !ret.oob_is_lit && ret.algorithm[0];
-        ret.image.clear();
-
-        for x in self.x_min - 2..=self.x_max + 2 {
+    pub fn step(&mut self) {
+        self.image = {
+            let mut image =
+                BitVec::with_capacity(((self.width() + 4) * (self.height() + 4)) as usize);
             for y in self.y_min - 2..=self.y_max + 2 {
-                if self.is_lit_next_step((x, y)) {
-                    ret.image.insert((x, y));
-                    ret.x_min = ret.x_min.min(x);
-                    ret.x_max = ret.x_max.max(x);
-                    ret.y_min = ret.y_min.min(y);
-                    ret.y_max = ret.y_max.max(y);
+                for x in self.x_min - 2..=self.x_max + 2 {
+                    image.push(self.is_lit_next_step((x, y)));
                 }
             }
-        }
-
-        ret
+            image
+        };
+        self.x_min -= 2;
+        self.x_max += 2;
+        self.y_min -= 2;
+        self.y_max += 2;
+        self.oob_is_lit = !self.oob_is_lit && self.algorithm[0];
     }
 
     pub fn pixels_lit(&self) -> usize {
-        self.image.len()
+        self.image.count_ones()
     }
 }
 
@@ -108,31 +121,24 @@ impl FromStr for TrenchScan {
             algorithm.push(is_lit(c)?);
         }
 
-        let mut image = HashSet::new();
-        let mut x_min = isize::MAX;
+        let mut image = BitVec::new();
         let mut x_max = isize::MIN;
-        let mut y_min = isize::MAX;
         let mut y_max = isize::MIN;
         for (y, line) in lines.enumerate() {
             let y = y as isize;
+            y_max = y.max(y_max);
             for (x, c) in line.chars().enumerate() {
                 let x = x as isize;
-                if is_lit(c)? {
-                    image.insert((x, y));
-
-                    x_min = x.min(x_min);
-                    x_max = x.max(x_max);
-                    y_min = y.min(y_min);
-                    y_max = y.max(y_max);
-                }
+                image.push(is_lit(c)?);
+                x_max = x.max(x_max);
             }
         }
         Ok(Self {
             algorithm,
             image,
-            x_min,
+            x_min: 0,
             x_max,
-            y_min,
+            y_min: 0,
             y_max,
             oob_is_lit: false,
         })
@@ -141,14 +147,17 @@ impl FromStr for TrenchScan {
 
 type Input = TrenchScan;
 
-pub fn part_1(input: Input) -> usize {
-    let input = input.step();
-    let input = input.step();
+pub fn part_1(mut input: Input) -> usize {
+    input.step();
+    input.step();
     input.pixels_lit()
 }
 
-pub fn part_2(input: Input) -> usize {
-    (0..50).fold(input, |input, _el| input.step()).pixels_lit()
+pub fn part_2(mut input: Input) -> usize {
+    for _ in 0..50 {
+        input.step();
+    }
+    input.pixels_lit()
 }
 
 #[cfg(test)]
@@ -179,11 +188,11 @@ mod tests {
 
     #[test]
     fn test_part_1_sample() {
-        let s = sample();
+        let mut s = sample();
         assert_eq!(s.pixels_lit(), 10);
-        let s = s.step();
+        s.step();
         assert_eq!(s.pixels_lit(), 24);
-        let s = s.step();
+        s.step();
         assert_eq!(s.pixels_lit(), 35);
         assert_eq!(part_1(sample()), 35);
     }
